@@ -1,16 +1,33 @@
-def isValid(s: str) -> bool:
-    stack = []
-    bracket_map = {')': '(', '}': '{', ']': '['}
+from flask_restful import Api, Resource
+from flask import Flask, request, jsonify
 
-    for char in s:
-        if char in bracket_map:
-            top_element = stack.pop() if stack else '#'
-            if top_element != bracket_map[char]:
-                return False
-        else:
-            stack.append(char)
+app = Flask(__name__)
+api = Api(app)
 
-    return not stack
+items = []
 
-iii = input()
-print(isValid(iii))
+class Item(Resource):
+    def get(self, name):
+        for item in items:
+            if item['name'] == name:
+                return jsonify(item)
+            return {'message': 'Item not found'}, 404
+
+    def post(self):
+        data = request.get_json()
+        new_item = {
+            'name': data['name'],
+            'price': data['price']
+        }
+        items.append(new_item)
+        return jsonify(new_item)
+
+    def delete(self, name):
+        global items
+        items = [item for item in items if item['name'] != name]
+        return {'message': 'Item deleted'}
+
+api.add_resource(Item, '/item/<string:name>', '/item')
+
+if __name__ == '__main__':
+    app.run(debug=True)
